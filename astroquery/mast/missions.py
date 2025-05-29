@@ -54,6 +54,7 @@ class MastMissionsClass(MastQueryWithLogin):
         self.dataset_kwds = {  # column keywords corresponding to dataset ID
             'hst': 'sci_data_set_name',
             'jwst': 'fileSetName',
+            'roman': 'fileSetName',
             'classy': 'Target',
             'ullyses': 'observation_id'
         }
@@ -110,10 +111,16 @@ class MastMissionsClass(MastQueryWithLogin):
             if isinstance(response, list):  # multiple async responses from batching
                 combined_products = []
                 for resp in response:
-                    combined_products.extend(resp.json().get('products', []))
+                    if self.mission == 'roman':
+                        combined_products.extend(resp.json().get('products', [])[0])
+                    else:
+                        combined_products.extend(resp.json().get('products', []))
                 return Table(combined_products)
 
-            results = Table(response.json()['products'])  # single async response
+            if self.mission == 'roman':
+                results = Table(response.json()['products'][0])  # single async response
+            else:
+                results = Table(response.json()['products'])
 
         return results
 
@@ -519,7 +526,7 @@ class MastMissionsClass(MastQueryWithLogin):
         """
 
         # Construct the full data URL based on mission
-        if self.mission in ['hst', 'jwst']:
+        if self.mission in ['hst', 'jwst', 'roman']:
             # HST and JWST have a dedicated endpoint for retrieving products
             base_url = self._service_api_connection.MISSIONS_DOWNLOAD_URL + self.mission + '/api/v0.1/retrieve_product'
             keyword = 'product_name'
