@@ -240,7 +240,42 @@ To get the list of products associated with a given Euclid observation_id or til
   EUC_MER_BGSUB-MOSAIC-DES-Z_TILE102018211-83C32F_20241018T143526.104818Z_00.00.fits               1398  102018211           DECAM     DECAM_z  SCIENCE         SKY 57.9990741   -51.5     IMAGE
 
 
-The method returns a list of products as an astropy.table.
+The method returns a list of products as an `~astropy.table.Table`. It is also possible to search by observation_id, but not by both parameters simultaneously.
+
+It is possible to retrieve LE3 data (scientific data) by observation_id or tile_index (but not by both simultaneously) and/or for different categories, groups and product types. The available values
+for these parameters are summarized in section :ref:`appendix`.
+
+
+.. Skipping authentication requiring examples
+.. doctest-skip::
+
+  >>> from astroquery.esa.euclid import Euclid
+  >>> le3_product_list = Euclid.get_scientific_product_list(tile_index=22)
+  >>> print("Found", len(le3_product_list), "results")
+  Found 3 results
+  >>> print(le3_product_list)
+  basic_download_data_oid  product_type                            product_id                          observation_id_list tile_index_list patch_id_list filter_name
+  ----------------------- -------------- ------------------------------------------------------------- ------------------- --------------- ------------- -----------
+                    47191 DpdLE3clCLTile       PPO_REGREPROC1_R2_CLTEST_R0_CLTILING_R5-output_tiles-27                  {}            {22}            {}
+                    47132 DpdLE3clCLTile PPO_REGREPROC1_R2_CLTEST_R0_CLTILINGPOLYHR_R2-output_tiles-27                  {}            {22}            {}
+                    47233 DpdLE3clCLTile       PPO_REGREPROC1_R2_CLTEST_R0_CLTILING_R6-output_tiles-27                  {}            {22}            {}
+
+
+In the following example, for the Clusters of Galaxies category, and the group GrpCatalog, we retrieve all the DET-CL AMICO auxiliary Data Product products (DpdLE3clAmicoAux):
+
+.. Skipping authentication requiring examples
+.. doctest-skip::
+
+  >>> from astroquery.esa.euclid import Euclid
+  >>> results = euclid.get_scientific_product_list(category='Clusters of Galaxies', group='GrpCatalog', product_type='DpdLE3clAmicoAux')
+  >>> print("Found", len(le3_product_list), "results")
+  Found 2 results
+  >>> print(le3_product_list)
+  basic_download_data_oid   product_type                      product_id                    observation_id_list tile_index_list patch_id_list filter_name
+  ----------------------- ---------------- ------------------------------------------------ ------------------- --------------- ------------- -----------
+                    47257 DpdLE3clAmicoAux PPO_REGREPROC1_R2_CLTEST_R0_CLDET_R3-amico_aux-0                  {}              {}            {}
+                    47258 DpdLE3clAmicoAux PPO_REGREPROC1_R2_CLTEST_R0_CLDET_R7-amico_aux-0                  {}              {}            {}
+
 
 1.2. Cone search
 ^^^^^^^^^^^^^^^^
@@ -667,7 +702,7 @@ To get the list of products associated with a given EUCLID observation_id or til
   EUC_MER_BGSUB-MOSAIC-DES-R_TILE102018211-1078B7_20241018T142927.232351Z_00.00.fits               1401  102018211           DECAM     DECAM_r  SCIENCE         SKY 57.9990741   -51.5     IMAGE
   EUC_MER_BGSUB-MOSAIC-DES-Z_TILE102018211-83C32F_20241018T143526.104818Z_00.00.fits               1398  102018211           DECAM     DECAM_z  SCIENCE         SKY 57.9990741   -51.5     IMAGE
 
-The method returns a list of products as an astropy.table.
+The method returns a list of products as an `~astropy.table.Table`.
 
 
 It is possible to download a product given its file name or product id:
@@ -1113,6 +1148,50 @@ will be able to access your shared table in a query.
   >>> Euclid.login()
   >>> Euclid.share_table_stop(table_name="user_<user_login_name>.my_table", group_name="my_group")
 
+2.9. Cross match
+^^^^^^^^^^^^^^^^
+
+It is possible to run a geometric cross-match between the RA/Dec coordinates of two tables using the crossmatch function
+provided by the archive. The returned table includes the identifiers from both tables and the angular separation, in
+degrees, between the RA/Dec coordinates of each source in the first table and its corresponding source in the second
+table.
+
+The cross-match can be executed in one single step by the following method
+
+.. Skipping authentication requiring examples
+.. doctest-skip::
+
+  >>> from astroquery.euclid import Euclid
+  >>> Euclid.login()
+  >>> full_qualified_table_name = 'user_<your_login_name>.my_sources'
+  >>> job = Euclid.cross_match_basic(table_a_full_qualified_name=full_qualified_table_name, table_a_column_ra='raj2000',
+                     table_a_column_dec='dej2000', table_b_full_qualified_name='catalogue.mer_catalogue',
+                     table_b_column_ra='right_ascension', table_b_column_dec='declination, radius=1.0, background=True)
+  >>> print(job)
+  Jobid: 1611860482314O
+  Phase: COMPLETED
+  Owner: None
+  Output file: 1611860482314O-result.vot.gz
+  Results: None
+  >>> result = job.get_results()
+
+This method updates the user table metadata to flag the positional RA/Dec columns and launches the positional
+cross-match as an asynchronous query. The returned job provides direct access to the output of the cross-match
+information: for each matched source, all the columns from the input tables plus the angular distance (degrees).
+Therefore, the size of the output can be quite large.
+
+By default, this method targets the main catalogue associated to each environment (PDR, OTF, REG and IDR) using a cone
+search radius of 1.0 arcseconds. Therefore, the above example can also be simplified as follows
+
+.. Skipping authentication requiring examples
+.. doctest-skip::
+
+  >>> from astroquery.euclid import Euclid
+  >>> Euclid.login()
+  >>> full_qualified_table_name = 'user_<your_login_name>.my_sources'
+  >>> job = Euclid.cross_match_basic(table_a_full_qualified_name=full_qualified_table_name, table_a_column_ra='raj2000',
+                                   table_a_column_dec='dej2000')
+  >>> result = job.get_results()
 
 
 3. Datalink service (Authenticated)
@@ -1206,6 +1285,18 @@ A fits file is made if no file name is provided.
 
 .. _DataLink: https://www.ivoa.net/documents/DataLink/
 
+.. _appendix:
+
+========
+Appendix
+========
+
+The following table summarises the available values of the parameters of the method get_scientific_product_list.
+
+.. csv-table:: Valid values for the parameters of the method get_scientific_product_list
+    :file: table_values.csv
+    :header-rows: 1
+    :widths: auto
 
 =============
 Reference/API

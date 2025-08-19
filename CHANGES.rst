@@ -14,6 +14,17 @@ gaia
 
 - Deprecated ``band`` from ``load_data`` as it has no effect on upstream
   response any more. [#3278]
+- New datalink retrieve types EPOCH_PHOTOMETRY_CROWDED_FIELD, EPOCH_ASTROMETRY_BRIGHT, XP_MEAN_SPECTRUM_GRAVLENS,
+  EPOCH_FLAGS_NSS, EPOCH_PARAMETERS_RVS_SINGLE, EPOCH_PARAMETERS_RVS_DOUBLE, EPOCH_FLAGS_VARI. [#3371, #3372]
+- Rename datalink retrieval types EPOCH_SPECTRUM_RVS, EPOCH_SPECTRUM_XP_SSO, EPOCH_SPECTRUM_XP_CROWDING, MEAN_SPECTRUM_XP,
+  EPOCH_SPECTRUM_XP and MEAN_SPECTRUM_XP_GRAVLENS. [#3382]
+
+mast
+^^^^
+
+- Deprecated the ``product`` parameter in the ``Tesscut.get_sectors``, ``Tesscut.get_cutouts``, and ``Tesscut.download_cutouts`` methods.
+  Support for TESS Image Calibration (TICA) high-level science products has been removed; only Science Processing Operations Center (SPOC) 
+  products are now supported. [#3391]
 
 Service fixes and enhancements
 ------------------------------
@@ -22,6 +33,20 @@ alma
 ^^^^
 
 - Bug fix in ``footprint_to_reg`` that did not allow regions to be plotted. [#3285]
+
+
+esa.euclid
+^^^^^^^^^^
+
+- New method, get_scientific_product_list, to retrieve scientific LE3
+  products. [#3313]
+- New cross-match method [#3386]
+
+gaia
+^^^^
+
+- New method cross_match_basic that simplifies the positional x-match method [#3320]
+- new DR4 datalink retrieve type MEAN_SPECTRUM_RVS [#3342]
 
 linelists.cdms
 ^^^^^^^^^^^^^^
@@ -34,6 +59,7 @@ heasarc
 - Add support for astropy.table.Row in Heasarc.download_data and Heasarc.locate_data. [#3270]
 - Heasarc.locate_data returns empty rows with an error in the error_message column if there are
   no data associated with that row rather than filtering it out. [#3275]
+- Heasarc.locate_data changed to use POST request instead of GET to accomodate large requests. [#3356]
 
 imcce
 ^^^^^
@@ -43,6 +69,14 @@ imcce
 
 - Changing RuntimeError to NoResultsWarning when an empty result is
   returned. [#3307]
+
+ipac.irsa
+^^^^^^^^^
+
+- Fix ``list_catalogs`` to not include image metadata tables, only
+  catalogs. The ``include_metadata_tables`` keyword argument allows opting
+  in to return all TAP tables, including non-spatial and metadata ones,
+  too. [#3334]
 
 SIMBAD
 ^^^^^^
@@ -76,11 +110,16 @@ mast
 
 - Fix bug in ``utils.remove_duplicate_products`` that does not retain the order of the products in an input table. [#3314]
 
-- Added ``return_uri_map`` parameter to ``Observations.get_cloud_uris`` to return a mapping of the input data product URIs 
+- Added ``return_uri_map`` parameter to ``Observations.get_cloud_uris`` to return a mapping of the input data product URIs
   to the returned cloud URIs. [#3314]
 
-- Added ``verbose`` parameter to ``Observations.get_cloud_uris`` to control whether warnings are logged when a product cannot 
+- Added ``verbose`` parameter to ``Observations.get_cloud_uris`` to control whether warnings are logged when a product cannot
   be found in the cloud. [#3314]
+
+- Improved ``MastMissions`` queries to accept lists for query critieria values, in addition to comma-delimited strings. [#3319]
+
+- Enhanced ``filter_products`` methods in ``MastMissions`` and ``Observations`` to support advanced filtering expressions
+  for numeric columns. [#3365]
 
 
 Infrastructure, Utility and Other Changes and Additions
@@ -93,10 +132,18 @@ query.py
   Some corner cases where downloads were not properly continued have been
   fixed. [#3232]
 
+skyview
+^^^^^^^
+
+- Changed SkyView URL to https. [#3346]
+
+
 utils
 ^^^^^
 
 - Raising cleaner errors earlier when server returns with error. [#3284]
+
+- ``return_frame`` parameter in ``utils.commons.parse_coordinates`` returns coordinates in the specified frame. [#3164]
 
 
 0.4.10 (2025-03-18)
